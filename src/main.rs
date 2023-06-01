@@ -1,6 +1,6 @@
 mod constant;
 mod macros;
-use constant::{get_content_type, valid_content_type};
+use constant::{get_content_type, is_prod, port, valid_content_type};
 use macros::f;
 use std::fs::{create_dir_all, read, remove_file, write};
 use warp::body::{bytes, content_length_limit};
@@ -91,5 +91,14 @@ async fn main() {
 
     let routes = upload_path.or(read_path).or(delete_path);
 
-    serve(routes).run(([127, 0, 0, 1], 8080)).await;
+    serve(routes)
+        .run((
+            if is_prod() {
+                [0, 0, 0, 0]
+            } else {
+                [127, 0, 0, 1]
+            },
+            port(),
+        ))
+        .await;
 }
