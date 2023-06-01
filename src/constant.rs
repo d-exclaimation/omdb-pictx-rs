@@ -12,13 +12,6 @@ pub fn valid_content_type(content_type: &String) -> bool {
     ALLOWED_IMAGE_TYPES.contains(&content_type.as_str())
 }
 
-pub fn get_content_type(content_type: &String) -> Option<String> {
-    content_type
-        .split(".")
-        .last()
-        .map(|extension| format!("image/{}", extension))
-}
-
 pub fn is_prod() -> bool {
     env::var("ENV").unwrap_or_else(|_| "dev".into()) == "prod"
 }
