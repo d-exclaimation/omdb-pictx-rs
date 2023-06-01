@@ -36,7 +36,7 @@ async fn upload_image(
 }
 
 async fn delete_image(name: String) -> Result<Response<String>, Rejection> {
-    let res = remove_file(&name);
+    let res = remove_file(f!("./images/{name}"));
 
     let status = if res.is_ok() { 200 } else { 500 };
     let message = if res.is_ok() {
@@ -60,6 +60,12 @@ async fn not_found(_: Rejection) -> Result<Response<String>, Rejection> {
 
 #[tokio::main]
 async fn main() {
+    let cors = warp::cors()
+        .allow_origin("*")
+        .allow_headers(vec!["GET", "PUT", "DELETE"]);
+
+    let logger = warp::log("pictx::image");
+
     let upload_path = warp::put()
         .and(path!("images" / String))
         .and(content_length_limit(1024 * 1024 * 10)) // 10MB
@@ -73,7 +79,12 @@ async fn main() {
         .and(path!("images" / String))
         .and_then(delete_image);
 
-    let routes = upload_path.or(read_path).or(delete_path).recover(not_found);
+    let routes = upload_path
+        .or(read_path)
+        .or(delete_path)
+        .with(cors)
+        .with(logger)
+        .recover(not_found);
 
     serve(routes)
         .run((
